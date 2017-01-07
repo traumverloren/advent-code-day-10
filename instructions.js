@@ -31,8 +31,9 @@ textArray.map(line => {
 
     const foundBot = bots.filter((bot) => (bot.botId === botId))[0];
     if (foundBot) {
-      foundBot[lowBot] = lowBot;
-      foundBot[highBot] = highBot;
+      console.log(foundBot);
+      foundBot.lowBot = lowBot;
+      foundBot.highBot = highBot;
     } else {
       bots.push({
         botId,
