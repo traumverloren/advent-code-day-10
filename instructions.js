@@ -9,20 +9,20 @@ let bots = [];
 let outputs = [];
 
 // finds lines starting with "value" and push info to bots
-function addChipValues(line) {
+function addChipValue(line) {
   const matches = line.match(/(\d+)/g).map(parseFloat);
   const botId = matches[1];
-  const value = matches[0];
+  const chip = matches[0];
 
   // if a bot already in a bots with this botId, just update that object's values
   const foundBot = bots.find(bot => (bot.botId === botId));
   if (foundBot) {
-    foundBot.values.push(value);
+    foundBot.chips.push(chip);
   } else {
   // if bot isn't there already in bots, add a new bot object
     bots.push({
       botId,
-      values: [value],
+      chips: [chip],
     });
   }
 }
@@ -47,7 +47,7 @@ function addChipDestinations(line) {
       botId,
       lowDestination,
       highDestination,
-      values: [],
+      chips: [],
       hasExchanged: false,
     });
   }
@@ -66,9 +66,9 @@ function createOutputs() {
   })
 }
 
-// filters out ones in bots with 2 values AND they haven't exchanged chips yet.
+// filters out ones in bots with 2 chips AND they haven't exchanged chips yet.
 function hasEligibleBots(bot) {
-  return (bot.values.length === 2 && bot.hasExchanged === false);
+  return (bot.chips.length === 2 && bot.hasExchanged === false);
 }
 
 // This runs recursively to keep exchanging chips until all bots with 2 chips have exchanged theirs.
@@ -78,31 +78,31 @@ function exchangeChips() {
 
   if (botsToRun.length > 0) {
     for (const bot of botsToRun) {
-      // update the high destination values
+      // update the high destination chips
       if (bot.highDestination.type === 'bot') {
         const high = bots.find(item => item.botId === bot.highDestination.id)
-        high.values.push(Math.max(...bot.values));
+        high.chips.push(Math.max(...bot.chips));
       }
       // update the low destination values
       if (bot.lowDestination.type === 'bot') {
         const low = bots.find(item => item.botId === bot.lowDestination.id)
-        low.values.push(Math.min(...bot.values));
+        low.chips.push(Math.min(...bot.chips));
       }
-
+      // if destination is output, add the output ID and chip to outputs array
       if (bot.highDestination.type === 'output') {
         outputs.push({
           id: bot.highDestination.id,
-          chip: Math.max(...bot.values),
+          chip: Math.max(...bot.chips),
         });
       }
       if (bot.lowDestination.type === 'output') {
         outputs.push({
           id: bot.lowDestination.id,
-          chip: Math.min(...bot.values),
+          chip: Math.min(...bot.chips),
         });
       }
 
-      bot.values.sort();
+      bot.chips.sort();
       bot.hasExchanged = true;
     }
     return exchangeChips();
@@ -111,11 +111,11 @@ function exchangeChips() {
   }
 }
 
-// Part 1, we can filter and find the bot that sorts 17 & 61
-function findBot(values) {
-  values = values.sort();
+// Part 1, we can filter and find the bot that sorts chips 17 & 61
+function findBot(chips) {
+  chips = chips.sort();
   const bot = bots.filter(bot => {
-    return bot.values[0] === values[0] && bot.values[1] === values[1];
+    return bot.chips[0] === chips[0] && bot.chips[1] === chips[1];
   })[0];
   return bot.botId;
 }
@@ -131,10 +131,11 @@ function multiplyOutputs() {
   }, 1)
 }
 
-// go through text lines and parse out the instructions that assign VALUES
-// and put that info into an object in bots
+// go through text lines and parse out the instructions
+// that assign VALUES or CHIP DESTINATIONS
+// and put that info in bots
 textArray.map(line => {
-  if (line.match(/^value/)) { addChipValues(line); }
+  if (line.match(/^value/)) { addChipValue(line); }
   if (line.match(/^bot/)) { addChipDestinations(line); }
 })
 
@@ -142,11 +143,11 @@ exchangeChips();
 
 // PART 1 ANSWER
 const sortingBot = findBot([17,61]);
-console.log("BOT", sortingBot, "SORTS 17 & 61");
+console.log("PART 1: BOT", sortingBot, "SORTS 17 & 61");
 
 /*
 PART 2:
 What do you get if you multiply together
-the values of one chip in each of outputs 0, 1, and 2?
+the values of chips in each of outputs 0, 1, and 2?
 */
-console.log(multiplyOutputs());
+console.log("PART 2: Product of Output 0 * Output 1 * Output 2 = ", multiplyOutputs());
