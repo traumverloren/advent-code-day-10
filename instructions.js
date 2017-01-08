@@ -7,10 +7,8 @@ const textArray = text.split('\n');
 // and what values they currently have in an array
 let bots = [];
 
-// go through text lines and parse out the instructions that assign VALUES
-// and put that info into an object in bots
-textArray.map(line => {
-  // finds lines starting with "value" and push info to bots
+// finds lines starting with "value" and push info to bots
+function addChipValues(line) {
   if (line.match(/^value/)) {
     const matches = line.match(/(\d+)/g).map(parseFloat);
     const botId = matches[1];
@@ -28,8 +26,11 @@ textArray.map(line => {
       });
     }
   }
-  // finds lines starting with "bot"
-  // finds bots high/low bot assignments and add/update objects to bots
+}
+
+// finds lines starting with "bot"
+// finds a bot's high/low assignments and add/update the object
+function addChipDestinations(line) {
   if (line.match(/^bot/)) {
     const matches = line.match(/(\d+)/g).map(parseFloat);
     const botId = matches[0];
@@ -53,21 +54,11 @@ textArray.map(line => {
       });
     }
   }
-})
+}
 
 // filters out ones in bots with 2 values AND they haven't exchanged chips yet.
 function hasEligibleBots(bot) {
   return (bot.values.length === 2 && bot.hasExchanged === false);
-}
-
-// At the end, we can filter and find the bot that sorts 17 & 61
-function findBot(values) {
-  values = values.sort();
-  const bot = bots.filter(bot => {
-    return bot.values[0] === values[0] && bot.values[1] === values[1];
-  })[0];
-
-  return bot.botId;
 }
 
 // This runs recursively to keep exchanging chips until all bots with 2 chips have exchanged theirs.
@@ -90,14 +81,30 @@ function exchangeChips() {
       bot.values.sort();
       bot.hasExchanged = true;
     }
-
     return exchangeChips();
-
   } else {
     return bots;
   }
 }
 
+// At the end, we can filter and find the bot that sorts 17 & 61
+function findBot(values) {
+  values = values.sort();
+  const bot = bots.filter(bot => {
+    return bot.values[0] === values[0] && bot.values[1] === values[1];
+  })[0];
+  return bot.botId;
+}
+
+// go through text lines and parse out the instructions that assign VALUES
+// and put that info into an object in bots
+textArray.map(line => {
+  addChipValues(line);
+  addChipDestinations(line);
+})
+
 exchangeChips();
 
-console.log("BOT", findBot([17,61]), "SORTS 17 & 61");
+const sortingBot = findBot([17,61]);
+
+console.log("BOT", sortingBot, "SORTS 17 & 61");
