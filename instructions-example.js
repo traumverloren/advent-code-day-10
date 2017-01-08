@@ -53,19 +53,6 @@ function addChipDestinations(line) {
   }
 }
 
-function createOutputs() {
-  return bots.map(bot => {
-    if (bot.lowDestination.type === 'output') {
-      const id = bot.lowDestination.id;
-      return { id };
-    }
-    if (bot.highDestination.type === 'output') {
-      const id = bot.highDestination.id;
-      return { id };
-    }
-  })
-}
-
 // filters out ones in bots with 2 chips AND they haven't exchanged chips yet.
 function hasEligibleBots(bot) {
   return (bot.chips.length === 2 && bot.hasExchanged === false);
