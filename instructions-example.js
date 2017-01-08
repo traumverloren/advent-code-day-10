@@ -6,54 +6,64 @@ const textArray = text.split('\n');
 // we'll store info about the bots, which bots their high/lows go to,
 // and what values they currently have in an array
 let bots = [];
+let outputs = [];
 
 // finds lines starting with "value" and push info to bots
 function addChipValues(line) {
-  if (line.match(/^value/)) {
-    const matches = line.match(/(\d+)/g).map(parseFloat);
-    const botId = matches[1];
-    const value = matches[0];
+  const matches = line.match(/(\d+)/g).map(parseFloat);
+  const botId = matches[1];
+  const value = matches[0];
 
-    // if a bot already in a bots with this botId, just update that object's values
-    const foundBot = bots.filter(bot => (bot.botId === botId))[0];
-    if (foundBot) {
-      foundBot.values.push(value);
-    } else {
-    // if bot isn't there already in bots, add a new bot object
-      bots.push({
-        botId,
-        values: [value],
-      });
-    }
+  // if a bot already in a bots with this botId, just update that object's values
+  const foundBot = bots.find(bot => (bot.botId === botId));
+  if (foundBot) {
+    foundBot.values.push(value);
+  } else {
+  // if bot isn't there already in bots, add a new bot object
+    bots.push({
+      botId,
+      values: [value],
+    });
   }
 }
 
 // finds lines starting with "bot"
 // finds a bot's high/low assignments and add/update the object
 function addChipDestinations(line) {
-  if (line.match(/^bot/)) {
-    const matches = line.match(/(\d+)/g).map(parseFloat);
-    const botId = matches[0];
-    const lowDestination = { type: line.match(/(?:low to )(\w+)/)[1], id: matches[1] };
-    const highDestination = { type: line.match(/(?:high to )(\w+)/)[1], id: matches[2] };
+  const matches = line.match(/(\d+)/g).map(parseFloat);
+  const botId = matches[0];
+  const lowDestination = { type: line.match(/(?:low to )(\w+)/)[1], id: matches[1] };
+  const highDestination = { type: line.match(/(?:high to )(\w+)/)[1], id: matches[2] };
 
-    const foundBot = bots.filter(bot => (bot.botId === botId))[0];
-    // if a bot already in a bots with this botId, just update that object's values
-    if (foundBot) {
-      foundBot.lowDestination = lowDestination;
-      foundBot.highDestination = highDestination;
-      foundBot.hasExchanged = false;
-    } else {
-      // if bot isn't there already in bots, add a new bot object
-      bots.push({
-        botId,
-        lowDestination,
-        highDestination,
-        values: [],
-        hasExchanged: false,
-      });
-    }
+  const foundBot = bots.find(bot => (bot.botId === botId));
+  // if a bot already in a bots with this botId, just update that object's values
+  if (foundBot) {
+    foundBot.lowDestination = lowDestination;
+    foundBot.highDestination = highDestination;
+    foundBot.hasExchanged = false;
+  } else {
+    // if bot isn't there already in bots, add a new bot object
+    bots.push({
+      botId,
+      lowDestination,
+      highDestination,
+      values: [],
+      hasExchanged: false,
+    });
   }
+}
+
+function createOutputs() {
+  return bots.map(bot => {
+    if (bot.lowDestination.type === 'output') {
+      const id = bot.lowDestination.id;
+      return { id };
+    }
+    if (bot.highDestination.type === 'output') {
+      const id = bot.highDestination.id;
+      return { id };
+    }
+  })
 }
 
 // filters out ones in bots with 2 values AND they haven't exchanged chips yet.
@@ -78,6 +88,20 @@ function exchangeChips() {
         const low = bots.find(item => item.botId === bot.lowDestination.id)
         low.values.push(Math.min(...bot.values));
       }
+
+      if (bot.highDestination.type === 'output') {
+        outputs.push({
+          id: bot.highDestination.id,
+          chip: Math.max(...bot.values),
+        });
+      }
+      if (bot.lowDestination.type === 'output') {
+        outputs.push({
+          id: bot.lowDestination.id,
+          chip: Math.min(...bot.values),
+        });
+      }
+
       bot.values.sort();
       bot.hasExchanged = true;
     }
@@ -87,7 +111,7 @@ function exchangeChips() {
   }
 }
 
-// At the end, we can filter and find the bot that sorts 17 & 61
+// Part 1, we can filter and find the bot that sorts 17 & 61
 function findBot(values) {
   values = values.sort();
   const bot = bots.filter(bot => {
@@ -96,11 +120,22 @@ function findBot(values) {
   return bot.botId;
 }
 
+// Part 2, we multiply chips for outputs 0, 1, 2
+function multiplyOutputs() {
+  const filteredOutputs =  outputs.filter(output => {
+    return (output.id === 0 || output.id === 1 || output.id === 2);
+  })
+
+  return filteredOutputs.reduce((acc, curr) => {
+    return acc * curr.chip;
+  }, 1)
+}
+
 // go through text lines and parse out the instructions that assign VALUES
 // and put that info into an object in bots
 textArray.map(line => {
-  addChipValues(line);
-  addChipDestinations(line);
+  if (line.match(/^value/)) { addChipValues(line); }
+  if (line.match(/^bot/)) { addChipDestinations(line); }
 })
 
 exchangeChips();
@@ -109,3 +144,10 @@ const sortingBot = findBot([3,5]);
 
 // PART 1 ANSWER
 console.log("BOT", sortingBot, "SORTS 3 & 5");
+
+/*
+PART 2:
+What do you get if you multiply together
+the values of one chip in each of outputs 0, 1, and 2?
+*/
+console.log(multiplyOutputs());
